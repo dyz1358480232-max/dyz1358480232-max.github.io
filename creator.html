@@ -4,15 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新闻创作者平台</title>
-    <!-- 引入 Tailwind CSS（美化界面，无需自己写大量CSS） -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 自定义微调样式 */
         .editor-toolbar button:hover {
             @apply bg-blue-100;
         }
         .news-item:hover {
             @apply shadow-lg transform -translate-y-1 transition-all;
+        }
+        /* 修复：用 CSS 实现富文本编辑器占位符 */
+        #contentEditor:empty:before {
+            content: '请输入新闻内容（必填，支持图文混排）';
+            color: #9ca3af; /* 灰色占位符 */
+            pointer-events: none; /* 点击时穿透占位符 */
+        }
+        #contentEditor {
+            outline: none; /* 清除默认聚焦边框 */
         }
     </style>
 </head>
@@ -59,12 +66,11 @@
                     <span id="uploadStatus" class="ml-2 text-sm text-gray-500"></span>
                 </div>
                 
-                <!-- 富文本编辑区 -->
+                <!-- 富文本编辑区（移除默认innerHTML占位符） -->
                 <div 
                     id="contentEditor" 
                     contenteditable="true" 
                     class="w-full min-h-[300px] px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="请输入新闻内容（必填，支持图文混排）"
                 ></div>
                 
                 <!-- 发布按钮 -->
@@ -77,7 +83,6 @@
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">已发布新闻</h2>
                 <div id="newsList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    <!-- 新闻条目会通过JS动态生成 -->
                     <p class="text-gray-500 text-center py-8">暂无已发布新闻</p>
                 </div>
             </div>
@@ -85,7 +90,7 @@
     </main>
 
     <script>
-        // 1. 初始化数据（从localStorage读取，没有则初始化）
+        // 1. 初始化数据
         let newsData = JSON.parse(localStorage.getItem('newsData')) || [];
 
         // 2. DOM元素获取
@@ -99,27 +104,60 @@
         const publishBtn = document.getElementById('publishBtn');
         const newsList = document.getElementById('newsList');
 
-        // 3. 富文本编辑功能
+        // 3. 修复：富文本功能（替换废弃的 document.execCommand）
         // 加粗
         boldBtn.addEventListener('click', () => {
-            document.execCommand('bold', false, null);
+            applyFormat('bold');
             contentEditor.focus();
         });
         // 斜体
         italicBtn.addEventListener('click', () => {
-            document.execCommand('italic', false, null);
+            applyFormat('italic');
             contentEditor.focus();
         });
         // 字体大小切换
         fontSizeBtn.addEventListener('click', () => {
-            const sizes = ['1', '2', '3', '4', '5', '6', '7'];
-            const currentSize = document.queryCommandValue('fontSize') || '3';
-            const newSize = sizes[(sizes.indexOf(currentSize) + 1) % sizes.length];
-            document.execCommand('fontSize', false, newSize);
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            const range = selection.getRangeAt(0);
+            const selectedContent = range.extractContents();
+            
+            const span = document.createElement('span');
+            // 切换字体大小（16px ↔ 20px ↔ 24px）
+            const currentSize = parseInt(window.getComputedStyle(selectedContent.firstChild || span).fontSize) || 16;
+            const newSize = currentSize === 16 ? 20 : currentSize === 20 ? 24 : 16;
+            span.style.fontSize = `${newSize}px`;
+            
+            span.appendChild(selectedContent);
+            range.insertNode(span);
+            range.selectNodeContents(span);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
             contentEditor.focus();
         });
 
-        // 4. 图片上传功能（转换为Base64存储，无需后端）
+        // 通用格式化函数（替代 document.execCommand）
+        function applyFormat(command) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            
+            const range = selection.getRangeAt(0);
+            const selectedContent = range.extractContents();
+            
+            const span = document.createElement('span');
+            if (command === 'bold') span.style.fontWeight = 'bold';
+            if (command === 'italic') span.style.fontStyle = 'italic';
+            
+            span.appendChild(selectedContent);
+            range.insertNode(span);
+            range.selectNodeContents(span);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+
+        // 4. 图片上传功能（保持不变）
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -133,7 +171,6 @@
                 return;
             }
 
-            // 读取图片为Base64
             const reader = new FileReader();
             reader.onload = (event) => {
                 const img = document.createElement('img');
@@ -141,7 +178,6 @@
                 img.style.maxWidth = '100%';
                 img.style.margin = '1rem 0';
 
-                // 插入到光标位置
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0) {
                     const range = selection.getRangeAt(0);
@@ -157,7 +193,7 @@
 
                 uploadStatus.textContent = '✅ 图片上传成功';
                 uploadStatus.classList.add('text-green-500');
-                imageUpload.value = ''; // 重置文件输入，允许重复上传同一张图
+                imageUpload.value = '';
                 setTimeout(() => {
                     uploadStatus.textContent = '';
                     uploadStatus.classList.remove('text-green-500');
@@ -166,10 +202,17 @@
             reader.readAsDataURL(file);
         });
 
-        // 5. 发布新闻功能
+        // 5. 修复：发布新闻功能（加调试日志 + 优化校验）
         publishBtn.addEventListener('click', () => {
+            console.log('发布按钮被点击了！'); // 调试日志
             const title = newsTitle.value.trim();
-            const content = contentEditor.innerHTML.trim();
+            // 优化：移除编辑区的空标签和占位符文本
+            const content = contentEditor.innerHTML
+                .replace(/<div><br><\/div>/g, '') // 移除空行
+                .replace(/<div>请输入新闻内容.*<\/div>/g, '') // 移除残留占位符
+                .trim();
+
+            console.log('标题：', title, '内容：', content); // 查看输入内容
 
             // 校验必填项
             if (!title) {
@@ -185,33 +228,38 @@
 
             // 构建新闻数据
             const newNews = {
-                id: Date.now(), // 用时间戳作为唯一ID
+                id: Date.now(),
                 title: title,
                 content: content,
                 publishTime: new Date().toLocaleString('zh-CN', { 
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit'
                 }),
-                likeCount: 0, // 初始点赞数为0
-                comments: [] // 初始评论为空
+                likeCount: 0,
+                comments: []
             };
 
-            // 保存到localStorage（添加到数组开头，实现最新新闻在最前面）
-            newsData.unshift(newNews);
-            localStorage.setItem('newsData', JSON.stringify(newsData));
+            // 保存到localStorage（加容错处理）
+            try {
+                newsData.unshift(newNews);
+                localStorage.setItem('newsData', JSON.stringify(newsData));
+                console.log('数据保存成功：', newsData); // 调试日志
 
-            // 重置编辑器
-            newsTitle.value = '';
-            contentEditor.innerHTML = '';
+                // 重置编辑器
+                newsTitle.value = '';
+                contentEditor.innerHTML = '';
 
-            // 刷新已发布新闻列表
-            renderNewsList();
+                // 刷新列表
+                renderNewsList();
 
-            // 提示发布成功
-            alert('✅ 新闻发布成功！已实时同步到读者端');
+                alert('✅ 新闻发布成功！已实时同步到读者端');
+            } catch (error) {
+                console.error('发布失败：', error); // 打印错误
+                alert('❌ 发布失败：' + error.message);
+            }
         });
 
-        // 6. 渲染已发布新闻列表
+        // 6. 渲染已发布新闻列表（保持不变）
         function renderNewsList() {
             if (newsData.length === 0) {
                 newsList.innerHTML = '<p class="text-gray-500 text-center py-8">暂无已发布新闻</p>';
@@ -237,24 +285,7 @@
             });
         }
 
-        // 7. 初始化编辑器占位符
-        contentEditor.addEventListener('focus', () => {
-            if (contentEditor.innerHTML.trim() === '') {
-                contentEditor.innerHTML = '';
-            }
-        });
-        contentEditor.addEventListener('blur', () => {
-            if (contentEditor.innerHTML.trim() === '') {
-                contentEditor.innerHTML = '请输入新闻内容（必填，支持图文混排）';
-                contentEditor.classList.add('text-gray-400');
-            }
-        });
-        if (contentEditor.innerHTML.trim() === '') {
-            contentEditor.innerHTML = '请输入新闻内容（必填，支持图文混排）';
-            contentEditor.classList.add('text-gray-400');
-        }
-
-        // 8. 监听localStorage变化（如果读者端修改了点赞/评论，这里实时更新）
+        // 7. 监听localStorage变化（保持不变）
         window.addEventListener('storage', (e) => {
             if (e.key === 'newsData') {
                 newsData = JSON.parse(e.newValue) || [];
@@ -262,7 +293,7 @@
             }
         });
 
-        // 9. 页面加载时渲染新闻列表
+        // 8. 页面加载时渲染新闻列表（保持不变）
         renderNewsList();
     </script>
 </body>
