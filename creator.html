@@ -3,293 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>新闻创作者平台</title>
+    <title>新闻阅读平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .editor-toolbar button:hover {
-            @apply bg-blue-100;
-        }
-        .news-item:hover {
+        .news-card:hover {
             @apply shadow-lg transform -translate-y-1 transition-all;
         }
-        #contentEditor:empty:before {
-            content: '请输入新闻内容（必填，支持图文混排）';
-            color: #9ca3af;
-            pointer-events: none;
+        .category-btn.active {
+            @apply bg-blue-600 text-white;
         }
-        #contentEditor {
-            outline: none;
+        .like-btn:hover {
+            @apply text-red-500 transition-colors;
+        }
+        .comment-item:hover {
+            @apply bg-gray-50;
+        }
+        .sidebar-news:hover {
+            @apply text-blue-600;
+        }
+        /* 关闭按钮样式优化 */
+        .close-btn {
+            @apply fixed top-6 right-6 z-60 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors;
         }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <header class="bg-white shadow-sm sticky top-0 z-10">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-blue-600">新闻创作者平台</h1>
-            <p class="text-gray-500">发布新闻，实时同步到读者端</p>
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600 mb-2 md:mb-0">新闻阅读平台</h1>
+            <!-- 分类筛选按钮（核心修复：确保点击逻辑正常） -->
+            <div class="flex flex-wrap gap-2">
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 active" data-category="all">全部</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="家居">家居</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="运动">运动</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="商业">商业</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="创新">创新</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="文化">文化</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="艺术">艺术</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="旅行">旅行</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="地球">地球</button>
+            </div>
         </div>
     </header>
 
     <main class="container mx-auto px-4 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">发布新闻</h2>
-                
-                <!-- 分类选择 -->
-                <select id="newsCategory" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="家居">家居</option>
-                    <option value="运动">运动</option>
-                    <option value="商业">商业</option>
-                    <option value="创新">创新</option>
-                    <option value="文化">文化</option>
-                    <option value="艺术">艺术</option>
-                    <option value="旅行">旅行</option>
-                    <option value="地球">地球</option>
-                </select>
-                
-                <input 
-                    type="text" 
-                    id="newsTitle" 
-                    placeholder="请输入新闻标题（必填）" 
-                    class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                
-                <div class="editor-toolbar flex gap-2 mb-4 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-                    <button id="boldBtn" class="px-3 py-1 border border-gray-300 rounded hover:cursor-pointer">
-                        <b>B</b>
-                    </button>
-                    <button id="italicBtn" class="px-3 py-1 border border-gray-300 rounded hover:cursor-pointer">
-                        <i>I</i>
-                    </button>
-                    <button id="fontSizeBtn" class="px-3 py-1 border border-gray-300 rounded hover:cursor-pointer">
-                        Aa
-                    </button>
-                    <div class="h-6 w-px bg-gray-300 mx-1"></div>
-                    <label for="imageUpload" class="px-3 py-1 bg-blue-500 text-white rounded hover:cursor-pointer">
-                        上传图片
-                    </label>
-                    <input type="file" id="imageUpload" accept="image/*" class="hidden">
-                    <span id="uploadStatus" class="ml-2 text-sm text-gray-500"></span>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">头条新闻</h2>
+                <div id="headlineNews" class="mb-8">
+                    <div class="text-center py-12 text-gray-500">暂无头条新闻</div>
                 </div>
-                
-                <div 
-                    id="contentEditor" 
-                    contenteditable="true" 
-                    class="w-full min-h-[300px] px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                ></div>
-                
-                <button id="publishBtn" class="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    发布新闻
-                </button>
+
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">更多新闻</h2>
+                <div id="newsList" class="space-y-6">
+                    <div class="text-center py-12 text-gray-500">暂无更多新闻</div>
+                </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4">已发布新闻</h2>
-                <div id="newsList" class="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                    <p class="text-gray-500 text-center py-8">暂无已发布新闻</p>
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">推荐新闻</h2>
+                <div id="sidebarNews" class="space-y-4">
+                    <div class="text-center py-12 text-gray-500">暂无推荐新闻</div>
+                </div>
+
+                <div class="mt-8 bg-blue-50 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-blue-800 mb-4">来自语言服务部</h3>
+                    <div class="space-y-3 text-sm text-gray-600">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                            <span>藏语新闻</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                            <span>西班牙语《世界日报》</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                            <span>西班牙语论坛</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
+    <!-- 新闻详情模态框（核心修复：关闭按钮+图片渲染） -->
+    <div id="newsDetailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <!-- 关闭按钮（固定定位，不被遮挡） -->
+        <button id="closeModalBtn" class="close-btn">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+            <h1 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-2"></h1>
+            <div class="text-sm text-gray-500 mb-6 flex items-center">
+                <span id="modalCategory" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full mr-3"></span>
+                <span id="modalPublishTime"></span>
+                <div class="w-px h-4 bg-gray-300 mx-3"></div>
+                <button id="modalLikeBtn" class="like-btn flex items-center">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <span id="modalLikeCount">0</span>
+                </button>
+            </div>
+            <!-- 核心：完整渲染HTML内容，包含图片 -->
+            <div id="modalContent" class="prose max-w-none"></div>
+
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">评论区</h3>
+                <div class="flex flex-col md:flex-row gap-3 mb-6">
+                    <input 
+                        type="text" 
+                        id="modalCommentAuthor" 
+                        placeholder="你的昵称（可选）" 
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <textarea 
+                        id="modalCommentContent" 
+                        placeholder="发表你的看法..." 
+                        class="flex-3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows="2"
+                    ></textarea>
+                    <button id="modalSubmitCommentBtn" class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        提交
+                    </button>
+                </div>
+                <div id="modalCommentList" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                    <p class="text-gray-500 text-center py-6">暂无评论，快来抢沙发～</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let newsData = JSON.parse(localStorage.getItem('newsData')) || [];
+        let currentNewsId = null;
+        let currentCategory = 'all';
 
         // DOM元素获取
-        const newsCategory = document.getElementById('newsCategory');
-        const newsTitle = document.getElementById('newsTitle');
-        const contentEditor = document.getElementById('contentEditor');
-        const boldBtn = document.getElementById('boldBtn');
-        const italicBtn = document.getElementById('italicBtn');
-        const fontSizeBtn = document.getElementById('fontSizeBtn');
-        const imageUpload = document.getElementById('imageUpload');
-        const uploadStatus = document.getElementById('uploadStatus');
-        const publishBtn = document.getElementById('publishBtn');
+        const headlineNews = document.getElementById('headlineNews');
         const newsList = document.getElementById('newsList');
-
-        // 富文本编辑功能
-        boldBtn.addEventListener('click', () => {
-            applyFormat('bold');
-            contentEditor.focus();
-        });
-        italicBtn.addEventListener('click', () => {
-            applyFormat('italic');
-            contentEditor.focus();
-        });
-        fontSizeBtn.addEventListener('click', () => {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            
-            const range = selection.getRangeAt(0);
-            const selectedContent = range.extractContents();
-            
-            const span = document.createElement('span');
-            const currentSize = parseInt(window.getComputedStyle(selectedContent.firstChild || span).fontSize) || 16;
-            const newSize = currentSize === 16 ? 20 : currentSize === 20 ? 24 : 16;
-            span.style.fontSize = `${newSize}px`;
-            
-            span.appendChild(selectedContent);
-            range.insertNode(span);
-            range.selectNodeContents(span);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            
-            contentEditor.focus();
-        });
-
-        // 图片上传功能（核心修复：确保图片Base64完整存储）
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                uploadStatus.textContent = '❌ 请上传图片文件（jpg/png/gif）';
-                uploadStatus.classList.add('text-red-500');
-                setTimeout(() => {
-                    uploadStatus.textContent = '';
-                    uploadStatus.classList.remove('text-red-500');
-                }, 3000);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                // 核心：直接创建图片节点并插入，确保Base64完整
-                const img = document.createElement('img');
-                img.src = event.target.result; // 完整Base64地址
-                img.style.maxWidth = '100%';
-                img.style.margin = '1rem 0';
-                img.alt = '新闻配图';
-
-                // 确保插入到光标位置
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    range.collapse(true); // 确保光标位置正确
-                    range.insertNode(img);
-                    // 移动光标到图片后
-                    const newRange = document.createRange();
-                    newRange.setStartAfter(img);
-                    newRange.setEndAfter(img);
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                } else {
-                    contentEditor.appendChild(img);
-                }
-
-                uploadStatus.textContent = '✅ 图片上传成功';
-                uploadStatus.classList.add('text-green-500');
-                imageUpload.value = ''; // 重置文件选择
-                setTimeout(() => {
-                    uploadStatus.textContent = '';
-                    uploadStatus.classList.remove('text-green-500');
-                }, 3000);
-            };
-            // 读取为Base64（关键：确保完整编码）
-            reader.readAsDataURL(file);
-        });
-
-        // 通用格式化函数
-        function applyFormat(command) {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            
-            const range = selection.getRangeAt(0);
-            const selectedContent = range.extractContents();
-            
-            const span = document.createElement('span');
-            if (command === 'bold') span.style.fontWeight = 'bold';
-            if (command === 'italic') span.style.fontStyle = 'italic';
-            
-            span.appendChild(selectedContent);
-            range.insertNode(span);
-            range.selectNodeContents(span);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-
-        // 发布新闻功能（核心：完整保存HTML内容，包含图片Base64）
-        publishBtn.addEventListener('click', () => {
-            console.log('发布按钮被点击！');
-            const category = newsCategory.value.trim();
-            const title = newsTitle.value.trim();
-            // 核心：直接获取编辑区完整HTML，不做多余过滤
-            const content = contentEditor.innerHTML.trim();
-
-            // 校验
-            if (!title) {
-                alert('❌ 请输入新闻标题');
-                newsTitle.focus();
-                return;
-            }
-            if (!content) {
-                alert('❌ 请输入新闻内容');
-                contentEditor.focus();
-                return;
-            }
-
-            // 构建新闻数据（完整保存分类、标题、HTML内容）
-            const newNews = {
-                id: Date.now(),
-                category: category,
-                title: title,
-                content: content, // 完整HTML，包含图片Base64
-                publishTime: new Date().toLocaleString('zh-CN', { 
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit'
-                }),
-                likeCount: 0,
-                comments: []
-            };
-
-            try {
-                // 保存到localStorage
-                newsData.unshift(newNews);
-                localStorage.setItem('newsData', JSON.stringify(newsData));
-                console.log('发布成功，数据：', newNews);
-
-                // 重置表单
-                newsTitle.value = '';
-                contentEditor.innerHTML = '';
-                newsCategory.selectedIndex = 0;
-
-                // 刷新列表
-                renderNewsList();
-
-                alert('✅ 新闻发布成功！图片已同步到读者端');
-            } catch (error) {
-                console.error('发布失败：', error);
-                alert('❌ 发布失败：' + error.message);
-            }
-        });
-
-        // 渲染已发布新闻列表
-        function renderNewsList() {
-            if (newsData.length === 0) {
-                newsList.innerHTML = '<p class="text-gray-500 text-center py-8">暂无已发布新闻</p>';
-                return;
-            }
-
-            newsList.innerHTML = '';
-            newsData.forEach(news => {
-                const newsItem = document.createElement('div');
-                newsItem.className = 'news-item p-4 border border-gray-200 rounded-lg';
-                // 提取纯文本预览
-                const plainContent = news.content.replace(/<[^>]+>/g, '').slice(0, 100);
-                newsItem.innerHTML = `
-                    <span class="inline-block px-2 py-1 bg-${getCategoryColor(news.category)} text-white text-xs rounded-full mb-2">${news.category}</span>
-                    <h3 class="font-medium text-gray-800 mb-1">${news.title}</h3>
-                    <div class="text-sm text-gray-500 mb-2">
-                        发布时间：${news.publishTime} | 
-                        点赞数：${news.likeCount} | 
-                        评论数：${news.comments.length}
-                    </div>
-                    <div class="text-xs text-gray-400">
-                        内容预览：${plainContent}...
-                    </div>
-                `;
-                newsList.appendChild(newsItem);
-            });
-        }
+        const sidebarNews = document.getElementById('sidebarNews');
+        const categoryBtns = document.querySelectorAll('.category-btn');
+        const newsDetailModal = document.getElementById('newsDetailModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalCategory = document.getElementById('modalCategory');
+        const modalPublishTime = document.getElementById('modalPublishTime');
+        const modalContent = document.getElementById('modalContent');
+        const modalLikeBtn = document.getElementById('modalLikeBtn');
+        const modalLikeCount = document.getElementById('modalLikeCount');
+        const modalCommentAuthor = document.getElementById('modalCommentAuthor');
+        const modalCommentContent = document.getElementById('modalCommentContent');
+        const modalSubmitCommentBtn = document.getElementById('modalSubmitCommentBtn');
+        const modalCommentList = document.getElementById('modalCommentList');
 
         // 分类颜色映射
         function getCategoryColor(category) {
@@ -306,18 +176,262 @@
             return colors[category] || 'gray-500';
         }
 
-        // 监听localStorage变化
+        // 渲染头条新闻（核心修复：正确提取图片）
+        function renderHeadlineNews() {
+            if (newsData.length === 0) {
+                headlineNews.innerHTML = '<div class="text-center py-12 text-gray-500">暂无头条新闻</div>';
+                return;
+            }
+
+            const topNews = newsData[0];
+            // 核心：从新闻内容中提取第一张图片（优先用上传的Base64图片）
+            let coverImg = 'https://picsum.photos/seed/news/800/400'; // 备用图
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = topNews.content;
+            const firstImg = tempDiv.querySelector('img');
+            if (firstImg && firstImg.src) {
+                coverImg = firstImg.src; // 使用上传的真实图片
+            }
+
+            headlineNews.innerHTML = `
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer" data-id="${topNews.id}">
+                    <div class="h-64 overflow-hidden">
+                        <img src="${coverImg}" alt="${topNews.title}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-6">
+                        <span class="inline-block px-2 py-1 bg-${getCategoryColor(topNews.category)} text-white text-xs rounded-full mb-2">${topNews.category}</span>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">${topNews.title}</h3>
+                        <div class="text-sm text-gray-500 mb-3">${topNews.publishTime}</div>
+                        <p class="text-gray-600 line-clamp-3">${topNews.content.replace(/<[^>]+>/g, '').slice(0, 200)}...</p>
+                    </div>
+                </div>
+            `;
+
+            // 绑定点击事件
+            headlineNews.querySelector('.cursor-pointer').addEventListener('click', () => showNewsDetail(topNews.id));
+        }
+
+        // 渲染新闻列表（核心修复：分类筛选逻辑）
+        function renderNewsList(category = 'all') {
+            currentCategory = category;
+            
+            // 激活对应分类按钮
+            categoryBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === category);
+            });
+
+            // 核心：正确筛选分类新闻
+            let filteredNews = newsData;
+            if (category !== 'all' && category) {
+                filteredNews = newsData.filter(news => news.category === category);
+            }
+
+            if (filteredNews.length === 0) {
+                newsList.innerHTML = `<div class="text-center py-12 text-gray-500">暂无${category === 'all' ? '' : category}分类新闻</div>`;
+                return;
+            }
+
+            // 排除头条新闻，只渲染列表
+            const listNews = filteredNews.slice(1);
+            newsList.innerHTML = '';
+            
+            // 最多渲染5条
+            listNews.slice(0, 5).forEach(news => {
+                // 提取第一张图片
+                let coverImg = 'https://picsum.photos/seed/news/400/300';
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = news.content;
+                const firstImg = tempDiv.querySelector('img');
+                if (firstImg && firstImg.src) {
+                    coverImg = firstImg.src;
+                }
+
+                const newsItem = document.createElement('div');
+                newsItem.className = 'bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer flex flex-col md:flex-row gap-4';
+                newsItem.innerHTML = `
+                    <div class="md:w-1/3 h-48 overflow-hidden">
+                        <img src="${coverImg}" alt="${news.title}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="md:w-2/3 p-4">
+                        <span class="inline-block px-2 py-1 bg-${getCategoryColor(news.category)} text-white text-xs rounded-full mb-2">${news.category}</span>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">${news.title}</h3>
+                        <div class="text-sm text-gray-500 mb-2">${news.publishTime} | ${news.likeCount} 人点赞</div>
+                        <p class="text-gray-600 text-sm line-clamp-3">${news.content.replace(/<[^>]+>/g, '').slice(0, 100)}...</p>
+                    </div>
+                `;
+                newsItem.dataset.id = news.id;
+                newsItem.addEventListener('click', () => showNewsDetail(news.id));
+                newsList.appendChild(newsItem);
+            });
+        }
+
+        // 渲染侧边栏新闻
+        function renderSidebarNews() {
+            if (newsData.length === 0) {
+                sidebarNews.innerHTML = '<div class="text-center py-12 text-gray-500">暂无推荐新闻</div>';
+                return;
+            }
+
+            sidebarNews.innerHTML = '';
+            const sidebarNewsData = newsData.slice(1, 6); // 取前5条非头条新闻
+            sidebarNewsData.forEach(news => {
+                const sidebarItem = document.createElement('div');
+                sidebarItem.className = 'sidebar-news cursor-pointer text-gray-800 hover:underline';
+                sidebarItem.dataset.id = news.id;
+                sidebarItem.innerHTML = `
+                    <span class="inline-block px-1 py-0.5 bg-${getCategoryColor(news.category)} text-white text-xs rounded-full mb-1">${news.category}</span>
+                    <h4 class="font-medium line-clamp-2">${news.title}</h4>
+                    <div class="text-xs text-gray-500 mt-1">${news.publishTime}</div>
+                `;
+                sidebarItem.addEventListener('click', () => showNewsDetail(news.id));
+                sidebarNews.appendChild(sidebarItem);
+            });
+        }
+
+        // 显示新闻详情（核心修复：完整渲染图片）
+        function showNewsDetail(newsId) {
+            const news = newsData.find(item => item.id === newsId);
+            if (!news) return;
+
+            currentNewsId = newsId;
+
+            // 填充详情内容
+            modalTitle.textContent = news.title;
+            modalCategory.textContent = news.category;
+            modalCategory.className = `px-2 py-1 bg-${getCategoryColor(news.category)} text-white rounded-full`;
+            modalPublishTime.textContent = news.publishTime;
+            // 核心：直接渲染完整HTML，包含图片
+            modalContent.innerHTML = news.content;
+            modalLikeCount.textContent = news.likeCount;
+
+            // 渲染评论
+            renderModalCommentList(news.comments);
+
+            // 显示模态框
+            newsDetailModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 渲染评论列表
+        function renderModalCommentList(comments) {
+            if (!comments || comments.length === 0) {
+                modalCommentList.innerHTML = '<p class="text-gray-500 text-center py-6">暂无评论，快来抢沙发～</p>';
+                return;
+            }
+
+            modalCommentList.innerHTML = '';
+            comments.forEach(comment => {
+                const commentItem = document.createElement('div');
+                commentItem.className = 'comment-item p-4 border border-gray-100 rounded-lg';
+                commentItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium text-gray-800">${comment.author || '匿名用户'}</span>
+                        <span class="text-xs text-gray-400">${comment.time}</span>
+                    </div>
+                    <p class="text-gray-600">${comment.content}</p>
+                `;
+                modalCommentList.appendChild(commentItem);
+            });
+        }
+
+        // 关闭模态框（核心修复：确保关闭功能正常）
+        closeModalBtn.addEventListener('click', () => {
+            newsDetailModal.classList.add('hidden');
+            document.body.style.overflow = 'auto'; // 恢复页面滚动
+            currentNewsId = null; // 重置当前新闻ID
+        });
+
+        // 点赞功能
+        modalLikeBtn.addEventListener('click', () => {
+            if (!currentNewsId) return;
+
+            const newsIndex = newsData.findIndex(item => item.id === currentNewsId);
+            if (newsIndex === -1) return;
+
+            // 增加点赞数
+            newsData[newsIndex].likeCount += 1;
+            localStorage.setItem('newsData', JSON.stringify(newsData));
+            modalLikeCount.textContent = newsData[newsIndex].likeCount;
+            
+            // 刷新列表
+            renderNewsList(currentCategory);
+            renderSidebarNews();
+
+            // 点赞动画
+            modalLikeBtn.classList.add('scale-125');
+            setTimeout(() => modalLikeBtn.classList.remove('scale-125'), 200);
+        });
+
+        // 提交评论
+        modalSubmitCommentBtn.addEventListener('click', () => {
+            if (!currentNewsId) return;
+
+            const content = modalCommentContent.value.trim();
+            if (!content) {
+                alert('❌ 请输入评论内容');
+                modalCommentContent.focus();
+                return;
+            }
+
+            const newsIndex = newsData.findIndex(item => item.id === currentNewsId);
+            if (newsIndex === -1) return;
+
+            // 构建评论数据
+            const newComment = {
+                author: modalCommentAuthor.value.trim() || '匿名用户',
+                content: content,
+                time: new Date().toLocaleString('zh-CN', { 
+                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                })
+            };
+
+            // 保存评论
+            newsData[newsIndex].comments.push(newComment);
+            localStorage.setItem('newsData', JSON.stringify(newsData));
+            
+            // 重置输入框
+            modalCommentAuthor.value = '';
+            modalCommentContent.value = '';
+            
+            // 刷新评论列表
+            renderModalCommentList(newsData[newsIndex].comments);
+            renderNewsList(currentCategory);
+            renderSidebarNews();
+
+            // 滚动到最新评论
+            modalCommentList.scrollTop = modalCommentList.scrollHeight;
+        });
+
+        // 分类筛选点击事件（核心修复：确保筛选逻辑正常）
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                currentCategory = category;
+                renderHeadlineNews();
+                renderNewsList(category);
+                renderSidebarNews();
+            });
+        });
+
+        // 监听localStorage变化（实时同步）
         window.addEventListener('storage', (e) => {
             if (e.key === 'newsData') {
                 newsData = JSON.parse(e.newValue) || [];
-                renderNewsList();
+                renderHeadlineNews();
+                renderNewsList(currentCategory);
+                renderSidebarNews();
             }
         });
 
-        // 初始化渲染
-        renderNewsList();
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHeadlineNews();
+            renderNewsList();
+            renderSidebarNews();
+        });
     </script>
 </body>
 </html>
+
 
 
