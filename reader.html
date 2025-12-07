@@ -21,15 +21,19 @@
         .sidebar-news:hover {
             @apply text-blue-600;
         }
+        /* 关闭按钮样式优化 */
+        .close-btn {
+            @apply fixed top-6 right-6 z-60 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 transition-colors;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <header class="bg-white shadow-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
             <h1 class="text-2xl font-bold text-blue-600 mb-2 md:mb-0">新闻阅读平台</h1>
-            <!-- 恢复：分类筛选按钮 -->
+            <!-- 分类筛选按钮（核心修复：确保点击逻辑正常） -->
             <div class="flex flex-wrap gap-2">
-                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="all">全部</button>
+                <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 active" data-category="all">全部</button>
                 <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="家居">家居</button>
                 <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="运动">运动</button>
                 <button class="category-btn px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50" data-category="商业">商业</button>
@@ -83,52 +87,52 @@
         </div>
     </main>
 
-    <!-- 修复：添加关闭按钮 -->
+    <!-- 新闻详情模态框（核心修复：关闭按钮+图片渲染） -->
     <div id="newsDetailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <!-- 新增：关闭按钮 -->
-            <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            <div class="p-6 pt-10">
-                <h1 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-2"></h1>
-                <div class="text-sm text-gray-500 mb-6 flex items-center">
-                    <span id="modalCategory" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full mr-3"></span>
-                    <span id="modalPublishTime"></span>
-                    <div class="w-px h-4 bg-gray-300 mx-3"></div>
-                    <button id="modalLikeBtn" class="like-btn flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                        </svg>
-                        <span id="modalLikeCount">0</span>
+        <!-- 关闭按钮（固定定位，不被遮挡） -->
+        <button id="closeModalBtn" class="close-btn">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+            <h1 id="modalTitle" class="text-2xl font-bold text-gray-800 mb-2"></h1>
+            <div class="text-sm text-gray-500 mb-6 flex items-center">
+                <span id="modalCategory" class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full mr-3"></span>
+                <span id="modalPublishTime"></span>
+                <div class="w-px h-4 bg-gray-300 mx-3"></div>
+                <button id="modalLikeBtn" class="like-btn flex items-center">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    <span id="modalLikeCount">0</span>
+                </button>
+            </div>
+            <!-- 核心：完整渲染HTML内容，包含图片 -->
+            <div id="modalContent" class="prose max-w-none"></div>
+
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">评论区</h3>
+                <div class="flex flex-col md:flex-row gap-3 mb-6">
+                    <input 
+                        type="text" 
+                        id="modalCommentAuthor" 
+                        placeholder="你的昵称（可选）" 
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <textarea 
+                        id="modalCommentContent" 
+                        placeholder="发表你的看法..." 
+                        class="flex-3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows="2"
+                    ></textarea>
+                    <button id="modalSubmitCommentBtn" class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        提交
                     </button>
                 </div>
-                <div id="modalContent" class="prose max-w-none"></div>
-
-                <div class="mt-8">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">评论区</h3>
-                    <div class="flex gap-3 mb-6">
-                        <input 
-                            type="text" 
-                            id="modalCommentAuthor" 
-                            placeholder="你的昵称（可选）" 
-                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                        <textarea 
-                            id="modalCommentContent" 
-                            placeholder="发表你的看法..." 
-                            class="flex-3 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            rows="1"
-                        ></textarea>
-                        <button id="modalSubmitCommentBtn" class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                            提交
-                        </button>
-                    </div>
-                    <div id="modalCommentList" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                        <p class="text-gray-500 text-center py-6">暂无评论，快来抢沙发～</p>
-                    </div>
+                <div id="modalCommentList" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                    <p class="text-gray-500 text-center py-6">暂无评论，快来抢沙发～</p>
                 </div>
             </div>
         </div>
@@ -139,12 +143,13 @@
         let currentNewsId = null;
         let currentCategory = 'all';
 
+        // DOM元素获取
         const headlineNews = document.getElementById('headlineNews');
         const newsList = document.getElementById('newsList');
         const sidebarNews = document.getElementById('sidebarNews');
         const categoryBtns = document.querySelectorAll('.category-btn');
         const newsDetailModal = document.getElementById('newsDetailModal');
-        const closeModalBtn = document.getElementById('closeModalBtn'); // 新增：关闭按钮
+        const closeModalBtn = document.getElementById('closeModalBtn');
         const modalTitle = document.getElementById('modalTitle');
         const modalCategory = document.getElementById('modalCategory');
         const modalPublishTime = document.getElementById('modalPublishTime');
@@ -156,6 +161,7 @@
         const modalSubmitCommentBtn = document.getElementById('modalSubmitCommentBtn');
         const modalCommentList = document.getElementById('modalCommentList');
 
+        // 分类颜色映射
         function getCategoryColor(category) {
             const colors = {
                 家居: 'brown-500',
@@ -170,6 +176,7 @@
             return colors[category] || 'gray-500';
         }
 
+        // 渲染头条新闻（核心修复：正确提取图片）
         function renderHeadlineNews() {
             if (newsData.length === 0) {
                 headlineNews.innerHTML = '<div class="text-center py-12 text-gray-500">暂无头条新闻</div>';
@@ -177,11 +184,14 @@
             }
 
             const topNews = newsData[0];
-            let coverImg = 'https://picsum.photos/seed/news/800/400';
+            // 核心：从新闻内容中提取第一张图片（优先用上传的Base64图片）
+            let coverImg = 'https://picsum.photos/seed/news/800/400'; // 备用图
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = topNews.content;
             const firstImg = tempDiv.querySelector('img');
-            if (firstImg) coverImg = firstImg.src;
+            if (firstImg && firstImg.src) {
+                coverImg = firstImg.src; // 使用上传的真实图片
+            }
 
             headlineNews.innerHTML = `
                 <div class="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer" data-id="${topNews.id}">
@@ -197,38 +207,44 @@
                 </div>
             `;
 
+            // 绑定点击事件
             headlineNews.querySelector('.cursor-pointer').addEventListener('click', () => showNewsDetail(topNews.id));
         }
 
+        // 渲染新闻列表（核心修复：分类筛选逻辑）
         function renderNewsList(category = 'all') {
             currentCategory = category;
+            
+            // 激活对应分类按钮
             categoryBtns.forEach(btn => {
-                if (btn.dataset.category === category) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
+                btn.classList.toggle('active', btn.dataset.category === category);
             });
 
+            // 核心：正确筛选分类新闻
             let filteredNews = newsData;
-            if (category !== 'all') {
+            if (category !== 'all' && category) {
                 filteredNews = newsData.filter(news => news.category === category);
             }
 
             if (filteredNews.length === 0) {
-                newsList.innerHTML = '<div class="text-center py-12 text-gray-500">暂无该分类新闻</div>';
+                newsList.innerHTML = `<div class="text-center py-12 text-gray-500">暂无${category === 'all' ? '' : category}分类新闻</div>`;
                 return;
             }
 
+            // 排除头条新闻，只渲染列表
             const listNews = filteredNews.slice(1);
             newsList.innerHTML = '';
-            listNews.forEach((news, index) => {
-                if (index >= 5) return;
+            
+            // 最多渲染5条
+            listNews.slice(0, 5).forEach(news => {
+                // 提取第一张图片
                 let coverImg = 'https://picsum.photos/seed/news/400/300';
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = news.content;
                 const firstImg = tempDiv.querySelector('img');
-                if (firstImg) coverImg = firstImg.src;
+                if (firstImg && firstImg.src) {
+                    coverImg = firstImg.src;
+                }
 
                 const newsItem = document.createElement('div');
                 newsItem.className = 'bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer flex flex-col md:flex-row gap-4';
@@ -249,6 +265,7 @@
             });
         }
 
+        // 渲染侧边栏新闻
         function renderSidebarNews() {
             if (newsData.length === 0) {
                 sidebarNews.innerHTML = '<div class="text-center py-12 text-gray-500">暂无推荐新闻</div>';
@@ -256,7 +273,7 @@
             }
 
             sidebarNews.innerHTML = '';
-            const sidebarNewsData = newsData.slice(1, 6);
+            const sidebarNewsData = newsData.slice(1, 6); // 取前5条非头条新闻
             sidebarNewsData.forEach(news => {
                 const sidebarItem = document.createElement('div');
                 sidebarItem.className = 'sidebar-news cursor-pointer text-gray-800 hover:underline';
@@ -271,27 +288,33 @@
             });
         }
 
+        // 显示新闻详情（核心修复：完整渲染图片）
         function showNewsDetail(newsId) {
             const news = newsData.find(item => item.id === newsId);
             if (!news) return;
 
             currentNewsId = newsId;
 
+            // 填充详情内容
             modalTitle.textContent = news.title;
             modalCategory.textContent = news.category;
             modalCategory.className = `px-2 py-1 bg-${getCategoryColor(news.category)} text-white rounded-full`;
             modalPublishTime.textContent = news.publishTime;
+            // 核心：直接渲染完整HTML，包含图片
             modalContent.innerHTML = news.content;
             modalLikeCount.textContent = news.likeCount;
 
+            // 渲染评论
             renderModalCommentList(news.comments);
 
+            // 显示模态框
             newsDetailModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
 
+        // 渲染评论列表
         function renderModalCommentList(comments) {
-            if (comments.length === 0) {
+            if (!comments || comments.length === 0) {
                 modalCommentList.innerHTML = '<p class="text-gray-500 text-center py-6">暂无评论，快来抢沙发～</p>';
                 return;
             }
@@ -311,28 +334,35 @@
             });
         }
 
-        // 新增：关闭模态框功能
+        // 关闭模态框（核心修复：确保关闭功能正常）
         closeModalBtn.addEventListener('click', () => {
             newsDetailModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = 'auto'; // 恢复页面滚动
+            currentNewsId = null; // 重置当前新闻ID
         });
 
+        // 点赞功能
         modalLikeBtn.addEventListener('click', () => {
             if (!currentNewsId) return;
 
             const newsIndex = newsData.findIndex(item => item.id === currentNewsId);
             if (newsIndex === -1) return;
 
+            // 增加点赞数
             newsData[newsIndex].likeCount += 1;
             localStorage.setItem('newsData', JSON.stringify(newsData));
             modalLikeCount.textContent = newsData[newsIndex].likeCount;
+            
+            // 刷新列表
             renderNewsList(currentCategory);
             renderSidebarNews();
 
+            // 点赞动画
             modalLikeBtn.classList.add('scale-125');
             setTimeout(() => modalLikeBtn.classList.remove('scale-125'), 200);
         });
 
+        // 提交评论
         modalSubmitCommentBtn.addEventListener('click', () => {
             if (!currentNewsId) return;
 
@@ -346,6 +376,7 @@
             const newsIndex = newsData.findIndex(item => item.id === currentNewsId);
             if (newsIndex === -1) return;
 
+            // 构建评论数据
             const newComment = {
                 author: modalCommentAuthor.value.trim() || '匿名用户',
                 content: content,
@@ -354,25 +385,35 @@
                 })
             };
 
+            // 保存评论
             newsData[newsIndex].comments.push(newComment);
             localStorage.setItem('newsData', JSON.stringify(newsData));
+            
+            // 重置输入框
             modalCommentAuthor.value = '';
             modalCommentContent.value = '';
+            
+            // 刷新评论列表
             renderModalCommentList(newsData[newsIndex].comments);
             renderNewsList(currentCategory);
             renderSidebarNews();
 
+            // 滚动到最新评论
             modalCommentList.scrollTop = modalCommentList.scrollHeight;
         });
 
+        // 分类筛选点击事件（核心修复：确保筛选逻辑正常）
         categoryBtns.forEach(btn => {
             btn.addEventListener('click', () => {
+                const category = btn.dataset.category;
+                currentCategory = category;
                 renderHeadlineNews();
-                renderNewsList(btn.dataset.category);
+                renderNewsList(category);
                 renderSidebarNews();
             });
         });
 
+        // 监听localStorage变化（实时同步）
         window.addEventListener('storage', (e) => {
             if (e.key === 'newsData') {
                 newsData = JSON.parse(e.newValue) || [];
@@ -382,6 +423,7 @@
             }
         });
 
+        // 页面加载初始化
         document.addEventListener('DOMContentLoaded', () => {
             renderHeadlineNews();
             renderNewsList();
@@ -389,7 +431,4 @@
         });
     </script>
 </body>
-</html>
-</body>
-
 </html>
