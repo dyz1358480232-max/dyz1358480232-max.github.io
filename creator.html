@@ -35,7 +35,7 @@
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4">发布新闻</h2>
                 
-                <!-- 新增：分类选择 -->
+                <!-- 分类选择 -->
                 <select id="newsCategory" class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="家居">家居</option>
                     <option value="运动">运动</option>
@@ -95,6 +95,7 @@
     <script>
         let newsData = JSON.parse(localStorage.getItem('newsData')) || [];
 
+        // DOM元素获取
         const newsCategory = document.getElementById('newsCategory');
         const newsTitle = document.getElementById('newsTitle');
         const contentEditor = document.getElementById('contentEditor');
@@ -106,6 +107,7 @@
         const publishBtn = document.getElementById('publishBtn');
         const newsList = document.getElementById('newsList');
 
+        // 富文本编辑功能
         boldBtn.addEventListener('click', () => {
             applyFormat('bold');
             contentEditor.focus();
@@ -135,7 +137,7 @@
             contentEditor.focus();
         });
 
-        // 修复：图片上传后正确显示
+        // 图片上传功能（核心修复：确保图片Base64完整存储）
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -151,36 +153,42 @@
 
             const reader = new FileReader();
             reader.onload = (event) => {
+                // 核心：直接创建图片节点并插入，确保Base64完整
                 const img = document.createElement('img');
-                img.src = event.target.result;
+                img.src = event.target.result; // 完整Base64地址
                 img.style.maxWidth = '100%';
                 img.style.margin = '1rem 0';
-                img.alt = '上传的图片'; // 新增：图片描述
+                img.alt = '新闻配图';
 
+                // 确保插入到光标位置
                 const selection = window.getSelection();
                 if (selection.rangeCount > 0) {
                     const range = selection.getRangeAt(0);
-                    range.deleteContents();
+                    range.collapse(true); // 确保光标位置正确
                     range.insertNode(img);
-                    range.setStartAfter(img);
-                    range.setEndAfter(img);
+                    // 移动光标到图片后
+                    const newRange = document.createRange();
+                    newRange.setStartAfter(img);
+                    newRange.setEndAfter(img);
                     selection.removeAllRanges();
-                    selection.addRange(range);
+                    selection.addRange(newRange);
                 } else {
                     contentEditor.appendChild(img);
                 }
 
                 uploadStatus.textContent = '✅ 图片上传成功';
                 uploadStatus.classList.add('text-green-500');
-                imageUpload.value = '';
+                imageUpload.value = ''; // 重置文件选择
                 setTimeout(() => {
                     uploadStatus.textContent = '';
                     uploadStatus.classList.remove('text-green-500');
                 }, 3000);
             };
+            // 读取为Base64（关键：确保完整编码）
             reader.readAsDataURL(file);
         });
 
+        // 通用格式化函数
         function applyFormat(command) {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -199,17 +207,15 @@
             selection.addRange(range);
         }
 
+        // 发布新闻功能（核心：完整保存HTML内容，包含图片Base64）
         publishBtn.addEventListener('click', () => {
-            console.log('发布按钮被点击了！');
-            const category = newsCategory.value;
+            console.log('发布按钮被点击！');
+            const category = newsCategory.value.trim();
             const title = newsTitle.value.trim();
-            const content = contentEditor.innerHTML
-                .replace(/<div><br><\/div>/g, '')
-                .replace(/<div>请输入新闻内容.*<\/div>/g, '')
-                .trim();
+            // 核心：直接获取编辑区完整HTML，不做多余过滤
+            const content = contentEditor.innerHTML.trim();
 
-            console.log('标题：', title, '内容：', content, '分类：', category);
-
+            // 校验
             if (!title) {
                 alert('❌ 请输入新闻标题');
                 newsTitle.focus();
@@ -221,11 +227,12 @@
                 return;
             }
 
+            // 构建新闻数据（完整保存分类、标题、HTML内容）
             const newNews = {
                 id: Date.now(),
-                category: category, // 新增：保存分类
+                category: category,
                 title: title,
-                content: content,
+                content: content, // 完整HTML，包含图片Base64
                 publishTime: new Date().toLocaleString('zh-CN', { 
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit'
@@ -235,23 +242,27 @@
             };
 
             try {
+                // 保存到localStorage
                 newsData.unshift(newNews);
                 localStorage.setItem('newsData', JSON.stringify(newsData));
-                console.log('数据保存成功：', newsData);
+                console.log('发布成功，数据：', newNews);
 
+                // 重置表单
                 newsTitle.value = '';
                 contentEditor.innerHTML = '';
                 newsCategory.selectedIndex = 0;
 
+                // 刷新列表
                 renderNewsList();
 
-                alert('✅ 新闻发布成功！已实时同步到读者端');
+                alert('✅ 新闻发布成功！图片已同步到读者端');
             } catch (error) {
                 console.error('发布失败：', error);
                 alert('❌ 发布失败：' + error.message);
             }
         });
 
+        // 渲染已发布新闻列表
         function renderNewsList() {
             if (newsData.length === 0) {
                 newsList.innerHTML = '<p class="text-gray-500 text-center py-8">暂无已发布新闻</p>';
@@ -262,6 +273,8 @@
             newsData.forEach(news => {
                 const newsItem = document.createElement('div');
                 newsItem.className = 'news-item p-4 border border-gray-200 rounded-lg';
+                // 提取纯文本预览
+                const plainContent = news.content.replace(/<[^>]+>/g, '').slice(0, 100);
                 newsItem.innerHTML = `
                     <span class="inline-block px-2 py-1 bg-${getCategoryColor(news.category)} text-white text-xs rounded-full mb-2">${news.category}</span>
                     <h3 class="font-medium text-gray-800 mb-1">${news.title}</h3>
@@ -271,13 +284,14 @@
                         评论数：${news.comments.length}
                     </div>
                     <div class="text-xs text-gray-400">
-                        内容预览：${news.content.replace(/<[^>]+>/g, '').slice(0, 100)}...
+                        内容预览：${plainContent}...
                     </div>
                 `;
                 newsList.appendChild(newsItem);
             });
         }
 
+        // 分类颜色映射
         function getCategoryColor(category) {
             const colors = {
                 家居: 'brown-500',
@@ -292,6 +306,7 @@
             return colors[category] || 'gray-500';
         }
 
+        // 监听localStorage变化
         window.addEventListener('storage', (e) => {
             if (e.key === 'newsData') {
                 newsData = JSON.parse(e.newValue) || [];
@@ -299,7 +314,11 @@
             }
         });
 
+        // 初始化渲染
         renderNewsList();
     </script>
 </body>
 </html>
+
+
+
